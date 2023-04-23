@@ -30,6 +30,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 // Membuat data array untuk daftar Commands
+const commands = []
 client.commands = new Collection()
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
@@ -42,7 +43,11 @@ for (const folder of commandFolders) {
         const command = require(filePath);
         // Set a new item in the Collection with the key as the command name and the value as the exported module
         if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command);
+			client.commands.set(command.data.name, command);
+			commands.push({
+				name: command.data.name,
+				description: command.data.description
+			})
         } else {
             console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
         }
@@ -53,16 +58,14 @@ for (const folder of commandFolders) {
 // Kami menggunakan 'c' untuk parameter acara agar tetap terpisah dari 'klien' yang sudah ditentukan
 client.once( Events.ClientReady, async c => {
 	// Mendaftarkan daftar Commands ke Discord API
-	// const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-	// try {
-	// 	console.log('Started refreshing application (/) commands.');
-		
-	// 	await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), client.commands);
-		
-	// 	console.log('Successfully reloaded application (/) commands.');
-	// } catch (error) {
-	// 	console.error(error);
-	// }
+	const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+	try {
+		console.log('Started refreshing application (/) commands.');
+		await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
+		console.log('Successfully reloaded application (/) commands.');
+	} catch (error) {
+		console.error(error);
+	}
 
 	console.log(`Ready! Logged in as ${c.user.tag}`);
 })
@@ -90,30 +93,29 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 // Obrolan dengan ChatGPT
-// client.on('messageCreate', async (message) => {
-// 	if (message.author.bot) return
-// 	if (message.channel.id !== process.env.CHANNEL_ID) return
-// 	if (message.content.startsWith('!')) return
+client.on('messageCreate', async (message) => {
+	if (message.author.bot) return
+	if (message.channel.id !== process.env.CHANNEL_ID) return
 	
-// 	await message.channel.sendTyping();
+	await message.channel.sendTyping();
 
-//     const result = await openai.createCompletion({
-//         model: "text-davinci-003",
-//         prompt: promptNeuro + "Q:" + message.content,
-//         temperature: 0.9,
-//         max_tokens: 150,
-//         top_p: 1,
-//         frequency_penalty: 0.0,
-//         presence_penalty: 0.6,
-//         stop: [" Q:", " A:"],
-// 	})
+    const result = await openai.createCompletion({
+        model: "text-davinci-003",
+        prompt: promptNeuro + "Q:" + message.content,
+        temperature: 0.9,
+        max_tokens: 150,
+        top_p: 1,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.6,
+        stop: [" Q:", " A:"],
+	})
 
-// 	var ms = result.data.choices[0].text.replace('?', '')
-// 	let cut = ms.indexOf('A:');
-// 	message.reply(ms.substr(cut + 3))
-// 	promptNeuro = promptNeuro + "Q:" + message.content + ms
-//     fs.writeFileSync('./characterConfig/identity.txt', promptNeuro)
-// })
+	var ms = result.data.choices[0].text.replace('?', '')
+	let cut = ms.indexOf('A:');
+	message.reply(ms.substr(cut + 3))
+	promptNeuro = promptNeuro + "Q:" + message.content + ms
+    fs.writeFileSync('./characterConfig/identity.txt', promptNeuro)
+})
 
 // Masuk ke Discord dengan token klien Anda
 client.login(token)
