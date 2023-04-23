@@ -29,34 +29,34 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-// Membuat data array untuk daftar Commands
-const commands = []
-client.commands = new Collection()
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
-
-for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder);
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-    for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
-        // Set a new item in the Collection with the key as the command name and the value as the exported module
-        if ('data' in command && 'execute' in command) {
-			client.commands.set(command.data.name, command);
-			commands.push({
-				name: command.data.name,
-				description: command.data.description
-			})
-        } else {
-            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-        }
-    }
-}
-
 // Saat klien siap, jalankan kode ini (hanya sekali)
 // Kami menggunakan 'c' untuk parameter acara agar tetap terpisah dari 'klien' yang sudah ditentukan
-client.once( Events.ClientReady, async c => {
+client.once(Events.ClientReady, async c => {
+	// Membuat data array untuk daftar Commands
+	const commands = []
+	client.commands = new Collection()
+	const foldersPath = path.join(__dirname, 'commands');
+	const commandFolders = fs.readdirSync(foldersPath);
+
+	for (const folder of commandFolders) {
+		const commandsPath = path.join(foldersPath, folder);
+		const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+		for (const file of commandFiles) {
+			const filePath = path.join(commandsPath, file);
+			const command = require(filePath);
+			// Set a new item in the Collection with the key as the command name and the value as the exported module
+			if ('data' in command && 'execute' in command) {
+				client.commands.set(command.data.name, command);
+				commands.push({
+					name: command.data.name,
+					description: command.data.description
+				})
+			} else {
+				console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+			}
+		}
+	}
+	
 	// Mendaftarkan daftar Commands ke Discord API
 	const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 	try {
