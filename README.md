@@ -10,11 +10,12 @@ Make sure you have NodeJS and NPM installed on your desktop.
 
 ### Setup a Project
 
-```### Clone Repo and install packages ###
+```
+###Clone Repo and install packages ###
 
-          git clone https://github.com/LogicSekai/CeeVyi-Bot
-          cd CeeVyi-Bot
-          npm install
+git clone https://github.com/LogicSekai/CeeVyi-Bot
+cd CeeVyi-Bot
+npm install
 ```
 
 ### Create .env
