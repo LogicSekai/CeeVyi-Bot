@@ -33,7 +33,14 @@ const openai = new OpenAIApi(configuration);
 // Kami menggunakan 'c' untuk parameter acara agar tetap terpisah dari 'klien' yang sudah ditentukan
 client.once(Events.ClientReady, async c => {
 	// Membuat data array untuk daftar Commands
-	const commands = []
+	// const commands = [
+	// 	{
+	// 		name: 'chat',
+	// 		description: 'Chatting with CeeVyi',
+			
+	// 	}
+	// ]
+
 	client.commands = new Collection()
 	const foldersPath = path.join(__dirname, 'commands');
 	const commandFolders = fs.readdirSync(foldersPath);
@@ -47,15 +54,20 @@ client.once(Events.ClientReady, async c => {
 			// Set a new item in the Collection with the key as the command name and the value as the exported module
 			if ('data' in command && 'execute' in command) {
 				client.commands.set(command.data.name, command);
-				commands.push({
-					name: command.data.name,
-					description: command.data.description
-				})
+				// commands.push({
+				// 	name: command.data.name,
+				// 	description: command.data.description
+				// })
 			} else {
 				console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 			}
 		}
 	}
+
+	const commands = [];
+	client.commands.forEach(command => {
+		commands.push(command.data.toJSON());
+	});
 	
 	// Mendaftarkan daftar Commands ke Discord API
 	const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
