@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageAttachment } = require('discord.js')
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, EmbedBuilder } = require('discord.js')
 require('dotenv/config')
 const axios = require('axios')
 
@@ -36,8 +36,7 @@ module.exports = {
 				'\nEpisode: ' + resultMAL.data.data.episodes +
 				'\nAired from: ' + resultMAL.data.data.aired.from.slice(0, 10) +
 				'\nStatus: ' + resultMAL.data.data.status +
-				'\nScore: ' + resultMAL.data.data.score +
-				'\n\n' + resultMAL.data.data.images.jpg.image_url
+				'\nScore: ' + resultMAL.data.data.score
 				
 				const btnDetail = new ButtonBuilder()
 					.setStyle(ButtonStyle.Link)
@@ -47,11 +46,31 @@ module.exports = {
 				const btnMore = new ButtonBuilder()
 					.setStyle(ButtonStyle.Link)
 					.setLabel('10 Lainnya')
-						.setURL('https://lunatic.logicsekai.com');
+					.setURL('https://lunatic.logicsekai.com');
 					
-				const actionRow = new ActionRowBuilder().addComponents(btnDetail, btnMore);
+				const btnMAL = new ButtonBuilder()
+					.setStyle(ButtonStyle.Link)
+					.setLabel('MyAnimeList')
+					.setURL(resultMAL.data.data.url)
 
-				await interaction.followUp({content: messageTemplate, components: [actionRow]})
+				const actionRow = new ActionRowBuilder().addComponents(btnDetail, btnMore, btnMAL)
+				// await interaction.followUp({ content: messageTemplate, components: [actionRow] })
+				const user = interaction.member.user;
+				const username = user.username;
+				const discriminator = user.discriminator;
+					
+				const embedTemplate = new EmbedBuilder()
+					.setColor(0x0099FF)
+					.setTitle(result.anilist.title.romaji)
+					.setURL(process.env.LUNATIC_SERVER + 'track_resource/details/' + result.anilist.id + '/' + result.anilist.idMal + '?pin=' + imageUrl)
+					.setAuthor({ name: 'Lunatic', iconURL: 'https://cdn.discordapp.com/avatars/478794091078090772/a_71572eea57ab0694103234c34f4e786f.gif?size=1024', url: 'https://lunatic.logicsekai.com' })
+					.setDescription(messageTemplate)
+					.setThumbnail(resultMAL.data.data.images.jpg.image_url)
+					.setImage(resultMAL.data.data.images.jpg.image_url)
+					.setTimestamp()
+					.setFooter({ text: `Requested by ${username}#${discriminator}`, iconURL: user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 }) });
+					
+				await interaction.followUp({ embeds: [embedTemplate], components: [actionRow] });
 			}).catch(async err => {
 				await interaction.followUp('Terjadi kesalahan saat memproses gambar')
             });
