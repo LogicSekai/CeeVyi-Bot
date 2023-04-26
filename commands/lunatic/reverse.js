@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, MessageActionRow, MessageButton } = require('discord.js')
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageAttachment } = require('discord.js')
 require('dotenv/config')
 const axios = require('axios')
 
@@ -12,7 +12,6 @@ module.exports = {
 				.setRequired(true)),
 	async execute(interaction) {
 		const imageUrl = interaction.options.getString('url')
-		// const imageUrl = 'https://assets.pikiran-rakyat.com/crop/0x0:0x0/x/photo/2023/01/12/1616827217.jpg'
 		
         await interaction.channel.sendTyping()
 		await interaction.deferReply()
@@ -32,21 +31,32 @@ module.exports = {
 					_similar = similar.slice(0, similar.indexOf('.'))
 				}
 				let messageTemplate = '***Hasil pencarian ' + _similar +
-					'% mirip dengan:***\n\nTitle: ' + result.anilist.title.romaji +
-					'\nType: ' + resultMAL.data.data.type +
-					'\nEpisode: ' + resultMAL.data.data.episodes +
-					'\nAired from: ' + resultMAL.data.data.aired.from.slice(0, 10) +
-					'\nStatus: ' + resultMAL.data.data.status +
-					'\nScore: ' + resultMAL.data.data.score +
-					'\n\n' + resultMAL.data.data.images.jpg.image_url
-				await interaction.followUp(messageTemplate)
+				'% mirip dengan:***\n\nTitle: ' + result.anilist.title.romaji +
+				'\nType: ' + resultMAL.data.data.type +
+				'\nEpisode: ' + resultMAL.data.data.episodes +
+				'\nAired from: ' + resultMAL.data.data.aired.from.slice(0, 10) +
+				'\nStatus: ' + resultMAL.data.data.status +
+				'\nScore: ' + resultMAL.data.data.score +
+				'\n\n' + resultMAL.data.data.images.jpg.image_url
+				
+				const btnDetail = new ButtonBuilder()
+					.setStyle(ButtonStyle.Link)
+					.setLabel('Detail')
+					.setURL(process.env.LUNATIC_SERVER + 'track_resource/details/' + result.anilist.id + '/' + result.anilist.idMal + '?pin=' + imageUrl);
+
+				const btnMore = new ButtonBuilder()
+					.setStyle(ButtonStyle.Link)
+					.setLabel('10 Lainnya')
+						.setURL('https://lunatic.logicsekai.com');
+					
+				const actionRow = new ActionRowBuilder().addComponents(btnDetail, btnMore);
+
+				await interaction.followUp({content: messageTemplate, components: [actionRow]})
 			}).catch(async err => {
-				await interaction.reply('Terjadi kesalahan saat memproses gambar')
+				await interaction.followUp('Terjadi kesalahan saat memproses gambar')
             });
 		}).catch(async (err) => {
-			await interaction.reply('Terjadi kesalahan saat memproses gambar 1')
+			await interaction.followUp('Terjadi kesalahan saat memproses gambar 1')
 		})
-
-		// await interaction.reply('Anda mengirim url ' + imageUrl)
 	},
 };
